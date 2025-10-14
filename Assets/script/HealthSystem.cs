@@ -25,7 +25,7 @@ public class HealthSystem : MonoBehaviour
         currentHealth -= damage;
         Debug.Log(gameObject.name + " recibió " + damage + " de daño. Salud restante: " + currentHealth);
 
-        if (currentHealth == 0)
+        if (currentHealth < 0)
         {
             Die();
 
@@ -44,7 +44,7 @@ public class HealthSystem : MonoBehaviour
         }
         else
         {
-            Destroy(gameObject, 0.70f);// O cualquier lógica de muerte (animación, etc.)
+            //Destroy(gameObject, 2f);// O cualquier lógica de muerte (animación, etc.)
         }
 
 

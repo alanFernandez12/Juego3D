@@ -12,17 +12,11 @@ public class Salto : MonoBehaviour
     public LayerMask groundLayer = 1;
     private Animator animator;
 
-
+    [Header("Ground Ray Origin")]
+    [SerializeField] private Transform groundRayOrigin; // Empty opcional en el centro del personaje
+    [SerializeField] private float originHeightOffset = 1f; // Offset en Y si el pivot está en los pies
 
     public bool isGrounded;
-
-
-    /* public bool isGrounded
-     {// al usar la variable, nos da el valor de _health(get)
-         get { return _isGrounded; }
-        private set{}
-     }*/
-
 
     private void Start()
     {
@@ -31,10 +25,11 @@ public class Salto : MonoBehaviour
     }
     void Update()
     {
-        isGrounded = false;
+       
         // Verificar si el jugador está en el suelo usando un Raycast
         RaycastHit hit;
-        isGrounded = Physics.Raycast(transform.position, Vector3.down, out hit, rayLength, groundLayer, QueryTriggerInteraction.Ignore);
+        Vector3 origin = GetGroundRayOrigin();
+        isGrounded = Physics.Raycast(origin, Vector3.down, out hit, rayLength, groundLayer, QueryTriggerInteraction.Ignore);
         if (saltosRestantes <= 0)// Si no tengo saltos
         {
 
@@ -53,6 +48,13 @@ public class Salto : MonoBehaviour
         }
         else { animator.SetBool("jump", false); }
     }
+
+    private Vector3 GetGroundRayOrigin()
+    {
+        if (groundRayOrigin != null) return groundRayOrigin.position;
+        return transform.position + Vector3.up * originHeightOffset;
+    }
+
     void Jump()
     {
         // Aplicar fuerza hacia arriba para saltar
@@ -64,12 +66,13 @@ public class Salto : MonoBehaviour
     void OnDrawGizmosSelected()
     {
         // Dibujar el raycast en el Editor incluso cuando no está en play mode
+        Vector3 origin = groundRayOrigin != null ? groundRayOrigin.position : transform.position + Vector3.up * originHeightOffset;
         Gizmos.color = isGrounded ? Color.green : Color.red;
-        Gizmos.DrawLine(transform.position, transform.position + Vector3.down * rayLength);
+        Gizmos.DrawLine(origin, origin + Vector3.down * rayLength);
 
         // Dibujar una esfera en el punto de impacto
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, rayLength, groundLayer))
+        if (Physics.Raycast(origin, Vector3.down, out hit, rayLength, groundLayer))
         {
             Gizmos.color = Color.blue;
             Gizmos.DrawSphere(hit.point, 0.1f);
