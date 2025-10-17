@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UIElements;
 
 public class PlayerMove : MonoBehaviour
@@ -20,6 +21,7 @@ public class PlayerMove : MonoBehaviour
     public float rotationSpeed = 10f;
     public LayerMask groundLayer = 1; // Layer por defecto
 
+    public UnityEvent prueba;
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -68,9 +70,40 @@ public class PlayerMove : MonoBehaviour
             moveSpeed = ogSpeed;
             animator.SetBool("sprint", false);
         }
+
+        if(Input.GetKey(KeyCode.Q))
+        {
+            Defend();
+        }
+        else
+        {
+            animator.SetBool("defend", false);
+           
+        }
+       if (Input.GetKeyDown(KeyCode.R))
+        {
+            prueba?.Invoke();
+        }
     }
 
     void FixedUpdate()
+    {
+
+        movement();
+
+    }
+    void OnLeftClick()
+    {
+        // Reproducir animación de ataque
+        animator.SetBool("attack1", true);
+        
+    }
+
+    void Defend()
+    {
+        animator.SetBool("defend", true);
+    }
+    void movement()
     {
         horizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
@@ -94,43 +127,36 @@ public class PlayerMove : MonoBehaviour
 
         rb.velocity = new Vector3(movement.x * moveSpeed, rb.velocity.y, movement.z * moveSpeed);
 
-       
-        if (movement != Vector3.zero)
+
+
+        if (animator.GetBool("defend"))
         {
-            Quaternion targetRotation = Quaternion.LookRotation(movement);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            movementithDefense();
 
-            
         }
-
-        animator.SetBool("movefront", verticalInput != 0 || horizontalInput != 0);
-        
-        }
-
-   /*void jump()
-    {
-        Debug.Log("Salto");
-        rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        animator.SetBool("jump", true);
-    }
-    void OnDrawGizmosSelected()
-    {
-        // Dibujar el raycast en el Editor incluso cuando no está en play mode
-        Gizmos.color = isGrounded ? Color.green : Color.red;
-        Gizmos.DrawLine(transform.position, transform.position + Vector3.down * rayLenght);
-
-        // Dibujar una esfera en el punto de impacto
-        RaycastHit hit;
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, rayLenght, groundLayer))
+        else
         {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawSphere(hit.point, 0.1f);
+            if (movement != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(movement);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+
+
+            }
+            animator.SetBool("movefront", verticalInput != 0 || horizontalInput != 0);
         }
-    }*/
-    void OnLeftClick()
-    {
-        // Reproducir animación de ataque
-        animator.SetBool("attack1", true);
-        
+
+
     }
+
+    void movementithDefense()
+    {
+
+        animator.SetBool("movergt", horizontalInput > 0);
+        animator.SetBool("movelft", horizontalInput < 0);
+        animator.SetBool("movefront", verticalInput != 0);
+
+    }
+
+
 }

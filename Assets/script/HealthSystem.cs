@@ -22,9 +22,13 @@ public class HealthSystem : MonoBehaviour
     }
     public void TakeDamage(int damage)
     {
-        currentHealth -= damage;
-        Debug.Log(gameObject.name + " recibió " + damage + " de daño. Salud restante: " + currentHealth);
-
+        if (currentHealth > 0)
+        {
+            currentHealth -= damage;
+            Debug.Log(gameObject.name + " recibió " + damage + " de daño. Salud restante: " + currentHealth);
+        }
+        
+        
         if (currentHealth < 0)
         {
             Die();
@@ -44,10 +48,14 @@ public class HealthSystem : MonoBehaviour
         }
         else
         {
-            //Destroy(gameObject, 2f);// O cualquier lógica de muerte (animación, etc.)
+            //Destroy(gameObject, 4f);// O cualquier lógica de muerte (animación, etc.)
         }
 
 
 
+    }
+    private void OnDestroy()
+    {
+        Destroy(gameObject);
     }
 }
