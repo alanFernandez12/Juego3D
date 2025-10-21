@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UIElements;
@@ -20,7 +21,7 @@ public class PlayerMove : MonoBehaviour
     private Animator animator;
     public float rotationSpeed = 10f;
     public LayerMask groundLayer = 1; // Layer por defecto
-
+    private Enemy enemy;    
     public UnityEvent prueba;
     void Start()
     {
@@ -31,6 +32,14 @@ public class PlayerMove : MonoBehaviour
     }
     void Update()
     {
+        // Si el juego está en pausa, no procesar entradas y limpiar flags de animación
+        if (Time.timeScale == 0f)
+        {
+            animator.SetBool("attack1", false);
+            animator.SetBool("defend", false);
+            animator.SetBool("sprint", false);
+            return;
+        }
         /*
         RaycastHit hit;
         isGrounded = Physics.Raycast(transform.position, Vector3.up, rayLenght);
@@ -71,7 +80,7 @@ public class PlayerMove : MonoBehaviour
             animator.SetBool("sprint", false);
         }
 
-        if(Input.GetKey(KeyCode.Q))
+        if(Input.GetMouseButton(1))
         {
             Defend();
         }
@@ -156,6 +165,20 @@ public class PlayerMove : MonoBehaviour
         animator.SetBool("movelft", horizontalInput < 0);
         animator.SetBool("movefront", verticalInput != 0);
 
+    }
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("enemy"))
+        {
+            enemy = collision.gameObject.GetComponent<Enemy>();
+        }
+    }
+    void HitDamage()
+    {
+        if (enemy != null)
+        {
+            animator.SetTrigger("hit");
+        }
     }
 
 
