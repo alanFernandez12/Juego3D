@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -23,12 +24,14 @@ public class PlayerMove : MonoBehaviour
     public LayerMask groundLayer = 1; // Layer por defecto
     private Enemy enemy;    
     public UnityEvent prueba;
+    public Boolean isDefending = false;
+    private HealthSystem health;
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
         ogSpeed = moveSpeed; // Guardar la velocidad original
-
+        health = GetComponent<HealthSystem>();
     }
     void Update()
     {
@@ -111,6 +114,7 @@ public class PlayerMove : MonoBehaviour
     void Defend()
     {
         animator.SetBool("defend", true);
+        
     }
     void movement()
     {
@@ -136,9 +140,10 @@ public class PlayerMove : MonoBehaviour
 
         rb.velocity = new Vector3(movement.x * moveSpeed, rb.velocity.y, movement.z * moveSpeed);
 
+        isDefending = animator.GetBool("defend");
 
 
-        if (animator.GetBool("defend"))
+        if (isDefending)
         {
             movementithDefense();
 
@@ -173,9 +178,23 @@ public class PlayerMove : MonoBehaviour
             enemy = collision.gameObject.GetComponent<Enemy>();
         }
     }
-    void HitDamage()
+    public void HitDamage() //este metodo lo disparo desde el enemy cuando golpea al player
     {
-        if (enemy != null)
+        if (health != null && health.IsDead) return;
+
+        // No dependas de 'enemy' para reproducir las animaciones
+       
+
+        // Normaliza triggers para evitar estados atascados
+        animator.ResetTrigger("hit");
+        animator.ResetTrigger("hitWithShield");
+
+        if (animator.GetBool("defend")) // si está defendiendo, golpe con escudo
+        {
+            animator.SetTrigger("hitWithShield");
+            Debug.Log("Player fue golpeado mientras defendía.");
+        }
+        else
         {
             animator.SetTrigger("hit");
         }

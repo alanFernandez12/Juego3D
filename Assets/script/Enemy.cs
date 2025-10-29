@@ -25,6 +25,10 @@ public class Enemy : MonoBehaviour
     // Componente NavMeshAgent que gestiona la navegación en el NavMesh
     private NavMeshAgent agent;
 
+    // Sistema de vida del enemigo para saber si está muerto
+    private HealthSystem health;
+    private bool deathHandled;
+
     [Header("Jugador")]
     // Transform del jugador (puede asignarse manualmente o se autocompleta por Tag)
     [SerializeField] private Transform player;          // Se autoasigna si está vacío
@@ -56,6 +60,7 @@ public class Enemy : MonoBehaviour
         // Cachear componentes necesarios al iniciar
         animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
+        health = GetComponent<HealthSystem>();
 
         // Convertir nombres de triggers a hash para mejorar rendimiento
         hitHash = Animator.StringToHash("hit");
@@ -68,6 +73,14 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
+        // Si el enemigo está muerto, detener y deshabilitar la IA/navmesh y salir
+        if (health != null && health.IsDead)
+        {
+            if (!deathHandled)
+                HandleDeath();
+            return;
+        }
+
         // Reintento periódico (cada ~30 frames) para encontrar al jugador si aún es null (útil si se instancia más tarde)
         if (player == null && Time.frameCount % 30 == 0)
         {
@@ -135,6 +148,35 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    private void HandleDeath()
+    {
+        deathHandled = true;
+
+        // Parar anim de movimiento y detener navegación
+        if (animator != null) animator.SetBool("move", false);
+
+        if (agent != null)
+        {
+            if (agent.enabled)
+            {
+                if (agent.hasPath) agent.ResetPath();
+                agent.isStopped = true;
+            }
+            // Deshabilitar el agente para que no vuelva a moverse
+            agent.enabled = false;
+        }
+
+        // Limpiar referencias de colisión
+        colisionPlayer = null;
+        colisionSword = null;
+
+        // Opcional: deshabilitar el collider para evitar empujes/contactos
+        // var col = GetComponent<Collider>(); if (col != null) col.enabled = false;
+
+        // Opcional: deshabilitar este script si ya no hace falta nada más
+        // enabled = false;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         // Registrar que la espada del jugador ha entrado en el trigger (para validar daño recibido)
@@ -169,6 +211,9 @@ public class Enemy : MonoBehaviour
 
     public void HitDamage()
     {
+        // Si está muerto no procesa daño adicional
+        if (health != null && health.IsDead) return;
+
         // Si la espada no está en contacto no procesamos daño
         if (colisionSword == null) return;
         // Evitar múltiples daños muy seguidos (cooldown)
@@ -189,6 +234,9 @@ public class Enemy : MonoBehaviour
 
     void Attack()
     {
+        // Si está muerto, no ataca
+        if (health != null && health.IsDead) return;
+
         Debug.Log("Enemy attacks player.");
 
         // Verificar que el jugador sigue en el trigger de ataque
@@ -196,9 +244,26 @@ public class Enemy : MonoBehaviour
         {
             Debug.Log("Enemy attack hits player.");
             var hs = colisionPlayer.GetComponent<HealthSystem>();
+            PlayerMove player = colisionPlayer.GetComponent<PlayerMove>();
             if (hs != null)
-                hs.TakeDamage(20); // Aplicar daño al jugador
-            Debug.Log("Enemy attacks player, player takes damage.");
+                if (hs.currentHealth >= 0)
+                {
+                    if(!player.isDefending) // Si no se está defendiendo puede recibir daño
+                    {
+                        hs.TakeDamage(20); // Aplicar daño al jugador
+                        player.HitDamage(); // animacion de daño del personaje
+                        Debug.Log("Enemy attacks player, player takes damage.");
+                    }
+                    
+                    
+                   
+                }
+                else
+                {
+                    animator.ResetTrigger(attackHash);
+                }
+
+
         }
     }
 }
